@@ -33,7 +33,7 @@ class Bullet:
 
 
 class Hero:
-    def __init__(self, x, y, color, player_num, speed=6, bullet_speed=12, health=100, cooldown=20, damage=20):
+    def __init__(self, x, y, color, player_num, speed=6, bullet_speed=12, health=100, cooldown=20, damage=20, ammo = 10, max_ammo = 10):
         self.x = x
         self.y = y
         self.color = color
@@ -46,7 +46,9 @@ class Hero:
         self.damage = damage                
         self.bullets = []
         self.shoot_cooldown = 0
-        self.shoot_cooldown_max = cooldown  
+        self.shoot_cooldown_max = cooldown 
+        self.ammo = ammo
+        self.max_ammo = max_ammo
         
         try:
             self.image = pygame.image.load(f"images/hero{player_num}.png")
@@ -63,10 +65,13 @@ class Hero:
         self.y = max(self.size, min(self.y, 600 - self.size))
     
     def shoot(self, direction):
-        if self.shoot_cooldown == 0:
+        if self.shoot_cooldown == 0 and self.ammo > 0:
             bullet = Bullet(self.x, self.y, direction, self.color, self.bullet_speed)  
             self.bullets.append(bullet)
-            self.shoot_cooldown = self.shoot_cooldown_max  
+            self.shoot_cooldown = 20
+            self.ammo -= 1
+
+            
     
     def update_bullets(self):
         if self.shoot_cooldown > 0:
@@ -91,6 +96,7 @@ class Hero:
     
     def draw_health_bar(self, screen):
         bar_width = 80
+        font = pygame.font.Font(None, 24)
         bar_height = 8
         bar_x = self.x - bar_width // 2
         bar_y = self.y - self.size - 15
@@ -99,7 +105,12 @@ class Hero:
         health_color = GREEN if self.health > 50 else ORANGE if self.health > 25 else RED
         pygame.draw.rect(screen, health_color, (bar_x, bar_y, health_width, bar_height))
         pygame.draw.rect(screen, WHITE, (bar_x, bar_y, bar_width, bar_height), 2)
-    
+        ammo_text = font.render(f"Ammo: {self.ammo}/{self.max_ammo}", True, WHITE)
+        text_x = self.x - ammo_text.get_width() // 2
+        text_y = bar_y + 12
+        screen.blit(ammo_text, (text_x, text_y))
+
+
     def check_bullet_collision(self, other_hero):
         for bullet in self.bullets:
             if bullet.active:
@@ -167,6 +178,10 @@ def start_game(mode="level1"):
                 if e.key == pygame.K_ESCAPE:
                     running = False
                 if not game_over:
+                    if e.key == pygame.K_r:
+                        player1.ammo = player1.max_ammo
+                    if e.key == pygame.K_RETURN or e.key == pygame.K_RSHIFT:
+                        player2.ammo = player2.max_ammo
                     if e.key == pygame.K_d:
                         player1.shoot(1)
                     if e.key == pygame.K_LEFT:
@@ -217,8 +232,8 @@ def start_game(mode="level1"):
             control_bg.fill(BLACK)
             window.blit(control_bg, (175, 220))
             title_ctrl = font_medium.render("КОНТРОЛИ", True, YELLOW)
-            p1_move = font_small.render("Играч 1: W/S движение, D стрелба →", True, BLUE)
-            p2_move = font_small.render("Играч 2: ↑ ↓ движение, ← стрелба", True, RED)
+            p1_move = font_small.render("Играч 1: W/S движение, D стрелба →, R презареждане", True, BLUE)
+            p2_move = font_small.render("Играч 2: ↑ ↓ движение, ← стрелба, Enter презареждане", True, RED)
             window.blit(title_ctrl, (800//2 - title_ctrl.get_width()//2, 240))
             window.blit(p1_move,    (800//2 - p1_move.get_width()//2, 290))
             window.blit(p2_move,    (800//2 - p2_move.get_width()//2, 325))
