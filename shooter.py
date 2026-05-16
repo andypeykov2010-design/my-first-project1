@@ -1,5 +1,6 @@
 import pygame
 import sys
+import pygame.mixer
 
 # Цветове
 WHITE = (255, 255, 255) 
@@ -37,15 +38,15 @@ class Hero:
         self.y = y
         self.color = color
         self.player_num = player_num
-        self.speed = speed                  #НОВО
-        self.bullet_speed = bullet_speed    #НОВО
+        self.speed = speed                  
+        self.bullet_speed = bullet_speed    
         self.size = 50
-        self.health = health                #НОВО
-        self.max_health = health            #НОВО
-        self.damage = damage                #НОВО
+        self.health = health                
+        self.max_health = health            
+        self.damage = damage                
         self.bullets = []
         self.shoot_cooldown = 0
-        self.shoot_cooldown_max = cooldown  #НОВО
+        self.shoot_cooldown_max = cooldown  
         
         try:
             self.image = pygame.image.load(f"images/hero{player_num}.png")
@@ -63,9 +64,9 @@ class Hero:
     
     def shoot(self, direction):
         if self.shoot_cooldown == 0:
-            bullet = Bullet(self.x, self.y, direction, self.color, self.bullet_speed)  # ← подава bullet_speed
+            bullet = Bullet(self.x, self.y, direction, self.color, self.bullet_speed)  
             self.bullets.append(bullet)
-            self.shoot_cooldown = self.shoot_cooldown_max  #НОВО
+            self.shoot_cooldown = self.shoot_cooldown_max  
     
     def update_bullets(self):
         if self.shoot_cooldown > 0:
@@ -133,12 +134,20 @@ def start_game(mode="level1"):
         has_background = True
     except:
         has_background = False
+    if has_background:
+        window.blit(background, (0, 0))
+    else:
+        if mode == "level2":
+             window.fill((40, 10, 10)) # Тъмно червен фон за по-трудно ниво
+        else:
+            window.fill(DARK_BG)
+
     
     font_big = pygame.font.Font(None, 72)
     font_medium = pygame.font.Font(None, 36)
     font_small = pygame.font.Font(None, 28)
     
-    #НОВО: подаваме параметрите на двамата играчи
+    # Подаваме параметрите на двамата играчи
     player1 = Hero(100, 300, BLUE, 1, speed, bullet_speed, health, cooldown, damage)
     player2 = Hero(700, 300, RED,  2, speed, bullet_speed, health, cooldown, damage)
     
@@ -161,11 +170,13 @@ def start_game(mode="level1"):
                     if e.key == pygame.K_d:
                         player1.shoot(1)
                     if e.key == pygame.K_LEFT:
-                        player2.shoot(-1)
+                         if mode != "training":
+                             player2.shoot(-1)
         
         if not game_over:
             player1.move(keys, pygame.K_w, pygame.K_s)
-            player2.move(keys, pygame.K_UP, pygame.K_DOWN)
+            if mode != "training":
+                player2.move(keys, pygame.K_UP, pygame.K_DOWN)
             player1.update_bullets()
             player2.update_bullets()
             player1.check_bullet_collision(player2)
@@ -196,7 +207,7 @@ def start_game(mode="level1"):
         p2_text = font_medium.render(f"Играч 2: {player2.health}HP", True, BLUE)
         window.blit(p2_text, (800 - p2_text.get_width() - 20, 20))
         
-        #НОВО: показва нивото горе в средата
+        # показва нивото горе в средата
         lvl_text = font_small.render(level_name, True, YELLOW)
         window.blit(lvl_text, (800//2 - lvl_text.get_width()//2, 20))
         
