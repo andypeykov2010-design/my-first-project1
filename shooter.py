@@ -12,6 +12,16 @@ YELLOW = (255, 215, 0)
 DARK_BG = (20, 20, 30)
 ORANGE = (255, 140, 0)
 
+class Wall:
+    def __init__(self, x, y, width, height, color=(100, 100, 100)):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.color = color
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.color, self.rect)
+        pygame.draw.rect(screen, WHITE, self.rect, 2) # Бяла рамка
+
+
 class Bullet:
     def __init__(self, x, y, direction, color, speed=12):
         self.x = x
