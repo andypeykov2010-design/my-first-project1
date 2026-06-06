@@ -1,6 +1,7 @@
 import pygame
 import sys
 import pygame.mixer
+from audio_manager import AudioManager
 
 # Цветове
 WHITE = (255, 255, 255) 
@@ -74,12 +75,14 @@ class Hero:
             self.y += self.speed
         self.y = max(self.size, min(self.y, 600 - self.size))
     
-    def shoot(self, direction):
+    def shoot(self, direction, audio=None):
         if self.shoot_cooldown == 0 and self.ammo > 0:
-            bullet = Bullet(self.x, self.y, direction, self.color, self.bullet_speed)  
+            bullet = Bullet(self.x, self.y, direction, self.color, self.bullet_speed)
             self.bullets.append(bullet)
-            self.shoot_cooldown = 20
+            self.shoot_cooldown = self.shoot_cooldown_max
             self.ammo -= 1
+            if audio:
+                audio.play_shoot()
 
             
     
@@ -145,6 +148,7 @@ def start_game(mode="level1"):
         level_name = "Ниво 2"
 
     pygame.init()
+    audio = AudioManager()
     window = pygame.display.set_mode((800, 600))
     pygame.display.set_caption(f"⚔️ Битка - {level_name}")  # показва нивото в заглавието
     clock = pygame.time.Clock()
@@ -177,6 +181,8 @@ def start_game(mode="level1"):
     winner = None
     show_controls = True
     controls_timer = 180
+    start_time = pygame.time.get_ticks()
+    TIME_LIMIT = 60
     
     while running:
         keys = pygame.key.get_pressed()
@@ -193,13 +199,15 @@ def start_game(mode="level1"):
                     if e.key == pygame.K_RETURN or e.key == pygame.K_RSHIFT:
                         player2.ammo = player2.max_ammo
                     if e.key == pygame.K_d:
-                        player1.shoot(1)
+                        player1.shoot(1, audio)
                     if e.key == pygame.K_LEFT:
                          if mode != "training":
-                             player2.shoot(-1)
+                             player2.shoot(-1, audio)
         
         if not game_over:
             player1.move(keys, pygame.K_w, pygame.K_s)
+            elapsed = (pygame.time.get_ticks() - start_time) // 1000
+            time_left = max(0, TIME_LIMIT - elapsed)
             if mode != "training":
                 player2.move(keys, pygame.K_UP, pygame.K_DOWN)
             player1.update_bullets()
@@ -218,6 +226,15 @@ def start_game(mode="level1"):
                 controls_timer -= 1
                 if controls_timer == 0:
                     show_controls = False
+
+            if time_left == 0 and not game_over:
+                game_over = True
+                if player1.health > player2.health:
+                    winner = 1
+                elif player2.health > player1.health:
+                    winner = 2
+                else:
+                    winner = 0
         
         if has_background:
             window.blit(background, (0, 0))
@@ -233,8 +250,9 @@ def start_game(mode="level1"):
         window.blit(p2_text, (800 - p2_text.get_width() - 20, 20))
         
         # показва нивото горе в средата
-        lvl_text = font_small.render(level_name, True, YELLOW)
+        lvl_text = font_small.render(f"{level_name}  |  ⏱ {time_left}s", True, YELLOW)
         window.blit(lvl_text, (800//2 - lvl_text.get_width()//2, 20))
+
         
         if show_controls and not game_over:
             control_bg = pygame.Surface((450, 160))
@@ -254,7 +272,10 @@ def start_game(mode="level1"):
             overlay.fill(BLACK)
             window.blit(overlay, (0, 0))
             winner_color = BLUE if winner == 1 else RED
-            winner_text = font_big.render(f"ИГРАЧ {winner} ПЕЧЕЛИ!", True, winner_color)
+            if winner == 0:
+                 winner_text = font_big.render("РАВЕНСТВО!", True, YELLOW)
+            else:
+                winner_text = font_big.render(f"ИГРАЧ {winner} ПЕЧЕЛИ!", True, winner_color)
             window.blit(winner_text, (800//2 - winner_text.get_width()//2, 250))
             restart = font_medium.render("ESC за изход", True, WHITE)
             window.blit(restart, (800//2 - restart.get_width()//2, 350))

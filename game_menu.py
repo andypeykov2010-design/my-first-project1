@@ -1,5 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout
 from PyQt5.QtCore import Qt
+from audio_manager import AudioManager
+
 
 class GameMenu(QWidget):
     def __init__(self):
@@ -101,6 +103,26 @@ class GameMenu(QWidget):
             }
         """)
         btn_back.clicked.connect(self.go_back)
+
+        self.audio = AudioManager()
+        self.btn_music = QPushButton("🔊 МУЗИКА: ВКЛ")
+        self.btn_music.setStyleSheet("""
+            QPushButton {
+                background-color: #161b22;
+                color: #f0f6fc;
+                border: 2px solid #6f42c1;
+                border-radius: 10px;
+                padding: 10px;
+                font-size: 16px;
+                min-width: 200px;
+                min-height: 45px;
+            }
+            QPushButton:hover {
+                background-color: #6f42c1;
+            }
+        """)
+        self.btn_music.clicked.connect(self.toggle_music)
+    
         
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -114,9 +136,18 @@ class GameMenu(QWidget):
         layout.addSpacing(25)
         layout.addWidget(btn_level2)
         layout.addSpacing(40)
+        layout.addWidget(self.btn_music)
+        layout.addSpacing(15)
         layout.addWidget(btn_back)
+       
+
         
         self.setLayout(layout)
+
+    def toggle_music(self):
+        is_on = self.audio.toggle_music()
+        self.btn_music.setText("🔊 МУЗИКА: ВКЛ" if is_on else "🔇 МУЗИКА: ИЗКЛ")
+
 
     def start_game(self, mode):
         from shooter import start_game
