@@ -3,7 +3,6 @@ import sys
 import pygame.mixer
 from audio_manager import AudioManager
 
-# Цветове
 WHITE = (255, 255, 255) 
 BLACK = (0, 0, 0)
 RED = (220, 53, 69)
@@ -20,7 +19,7 @@ class Wall:
 
     def draw(self, screen):
         pygame.draw.rect(screen, self.color, self.rect)
-        pygame.draw.rect(screen, WHITE, self.rect, 2) # Бяла рамка
+        pygame.draw.rect(screen, WHITE, self.rect, 2) 
 
 
 class Bullet:
@@ -28,7 +27,7 @@ class Bullet:
         self.x = x
         self.y = y
         self.direction = direction
-        self.speed = speed          # ← НОВО: приема speed
+        self.speed = speed          
         self.size = 8
         self.color = color
         self.active = True
@@ -44,7 +43,6 @@ class Bullet:
 
 
 class LaserBeam:
-    """Лазерен лъч с определена продължителност."""
     def __init__(self, x, y, direction, color, length=600, duration=15):
         self.x = x
         self.y = y
@@ -72,19 +70,15 @@ class LaserBeam:
         
         end_x = self.x + self.length * self.direction
         
-        # Гниещ ефект (светъл ореол)
         glow_width = int(self.width * 3 * (self.duration / self.max_duration))
         glow_color = self.glow_colors[0]
         if glow_width > 0:
             pygame.draw.line(screen, glow_color, (self.x, self.y), (end_x, self.y), glow_width)
         
-        # Основния лазер
         pygame.draw.line(screen, self.color, (self.x, self.y), (end_x, self.y), self.width)
         
-        # Бял център за интензитет
         pygame.draw.line(screen, WHITE, (self.x, self.y), (end_x, self.y), 2)
         
-        # Точка на начало
         pygame.draw.circle(screen, self.glow_colors[2], (int(self.x), int(self.y)), 6)
 
 
@@ -107,9 +101,8 @@ class Hero:
         self.ammo = ammo
         self.max_ammo = max_ammo
         
-        # Лазер режим
         self.use_laser = False
-        self.laser_cooldown = 10  # По-бързо презареждане за лазери
+        self.laser_cooldown = 10  
         
         try:
             self.image = pygame.image.load(f"images/hero{player_num}.png")
@@ -126,7 +119,6 @@ class Hero:
         self.y = max(self.size, min(self.y, 600 - self.size))
     
     def toggle_weapon(self):
-        """Преключва между куршуми и лазери."""
         self.use_laser = not self.use_laser
         return self.use_laser
     
@@ -137,7 +129,6 @@ class Hero:
             self.shoot_bullet(direction, audio)
     
     def shoot_bullet(self, direction, audio=None):
-        """Изстрелва куршум."""
         if self.shoot_cooldown == 0 and self.ammo > 0:
             bullet = Bullet(self.x, self.y, direction, self.color, self.bullet_speed)
             self.bullets.append(bullet)
@@ -147,7 +138,6 @@ class Hero:
                 audio.play_shoot()
     
     def shoot_laser(self, direction):
-        """Изстрелва лазер."""
         if self.shoot_cooldown == 0:
             laser = LaserBeam(self.x, self.y, direction, self.color, length=600, duration=15)
             self.lasers.append(laser)
@@ -159,12 +149,10 @@ class Hero:
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
         
-        # Обновяване на куршуми
         for bullet in self.bullets:
             bullet.move()
         self.bullets = [b for b in self.bullets if b.active]
         
-        # Обновяване на лазери
         for laser in self.lasers:
             laser.update()
         self.lasers = [l for l in self.lasers if l.active]
@@ -179,11 +167,9 @@ class Hero:
             text = font.render(str(self.player_num), True, WHITE)
             screen.blit(text, (self.x - 10, self.y - 15))
         
-        # Рисуване на куршуми
         for bullet in self.bullets:
             bullet.draw(screen)
         
-        # Рисуване на лазери
         for laser in self.lasers:
             laser.draw(screen)
         
@@ -201,7 +187,6 @@ class Hero:
         pygame.draw.rect(screen, health_color, (bar_x, bar_y, health_width, bar_height))
         pygame.draw.rect(screen, WHITE, (bar_x, bar_y, bar_width, bar_height), 2)
         
-        # Показване на амуниция или режим на оръжие
         if self.use_laser:
             weapon_text = font.render(f"ЛАЗЕР", True, YELLOW)
         else:
@@ -223,21 +208,17 @@ class Hero:
         return False
     
     def check_laser_collision(self, other_hero):
-        """Проверява дали лазер попада противника и наносява щета постоянно."""
         for laser in self.lasers:
             if laser.active:
-                # Проверка дали противника е на линията на лазера
                 end_x = laser.x + laser.length * laser.direction
                 
-                # По-голяма зона за попадение (по-лесно попадение)
-                if abs(other_hero.y - laser.y) < other_hero.size + 30:  # Увеличена зона
-                    # Проверка на X позиция
-                    if laser.direction == 1:  # Лазер идва отляво надясно
-                        if laser.x <= other_hero.x <= end_x:  # Включени краищата
-                            other_hero.health -= self.damage * 0.3  # Наносява щета всеки кадър
-                    else:  # Лазер идва отдясно наляво
-                        if end_x <= other_hero.x <= laser.x:  # Включени краищата
-                            other_hero.health -= self.damage * 0.3  # Наносява щета всеки кадър
+                if abs(other_hero.y - laser.y) < other_hero.size + 30:  
+                    if laser.direction == 1: 
+                        if laser.x <= other_hero.x <= end_x: 
+                            other_hero.health -= self.damage * 0.15 
+                    else:  
+                        if end_x <= other_hero.x <= laser.x:  
+                            other_hero.health -= self.damage * 0.15 
         return False
 
 
@@ -256,7 +237,7 @@ def start_game(mode="level1"):
     pygame.init()
     audio = AudioManager()
     window = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption(f"⚔️ Битка - {level_name}")  # показва нивото в заглавието
+    pygame.display.set_caption(f"⚔️ Битка - {level_name}")  
     clock = pygame.time.Clock()
     
     try:
@@ -269,7 +250,7 @@ def start_game(mode="level1"):
         window.blit(background, (0, 0))
     else:
         if mode == "level2":
-             window.fill((40, 10, 10)) # Тъмно червен фон за по-трудно ниво
+             window.fill((40, 10, 10)) 
         else:
             window.fill(DARK_BG)
 
@@ -278,7 +259,6 @@ def start_game(mode="level1"):
     font_medium = pygame.font.Font(None, 36)
     font_small = pygame.font.Font(None, 28)
     
-    # Подаваме параметрите на двамата играчи
     player1 = Hero(100, 300, BLUE, 1, speed, bullet_speed, health, cooldown, damage)
     player2 = Hero(700, 300, RED,  2, speed, bullet_speed, health, cooldown, damage)
     
@@ -300,21 +280,18 @@ def start_game(mode="level1"):
                 if e.key == pygame.K_ESCAPE:
                     running = False
                 if not game_over:
-                    # Преключване на оръжие
                     if e.key == pygame.K_l:
                         laser_on = player1.toggle_weapon()
                         print(f"Играч 1: {'ЛАЗЕР' if laser_on else 'КУРШУМИ'}")
-                    if e.key == pygame.K_k:  # K клавиш за Player 2
+                    if e.key == pygame.K_k: 
                         laser_on = player2.toggle_weapon()
                         print(f"Играч 2: {'ЛАЗЕР' if laser_on else 'КУРШУМИ'}")
                     
-                    # Презареждане на амуниция
                     if e.key == pygame.K_r:
                         player1.ammo = player1.max_ammo
                     if e.key == pygame.K_RETURN or e.key == pygame.K_RSHIFT:
                         player2.ammo = player2.max_ammo
                     
-                    # Стрелба
                     if e.key == pygame.K_d:
                         player1.shoot(1, audio)
                     if e.key == pygame.K_LEFT:
